@@ -33,7 +33,8 @@ for i in 0..20:
 - **Resource management** — `using` blocks, `dispose()`, `finalize()` for deterministic cleanup
 - **FFI** — call native C libraries directly via `NativeLibrary` + `@native` annotations
 - **Namespaces** — organize code with `namespace` declarations
-- **Rich stdlib** — String, Array, Hash, Int, Double, Float, Math, Set, List, Dict, Tuple, DateTime, TcpSocket, HttpServer
+- **Serialization** — `props: [serializable: json]` for auto-generated `to_json()`/`from_json()` + runtime reflection
+- **Rich stdlib** — String, Array, Hash, Int, Double, Float, Math, Set, List, Dict, Tuple, DateTime, TcpSocket, HttpServer, Reflect
 - **Iterator protocol** — any class with `has_next()`/`next()` works in `for..in` loops
 
 ## Prerequisites
@@ -295,6 +296,34 @@ emberc --target linux source.em -o output     # Cross-compile for Linux
 emberc source.em -o output                     # Auto-detect host platform
 ```
 
+### Serialization
+
+```ruby
+class Point(props: [serializable: json]):
+    let x: Double
+    let y: Double
+    def initialize(@x: Double, @y: Double):
+        let _ = 0
+
+let p = Point.new(3.14, 2.72)
+IO.println(p.to_json())                         # {"x":3.14,"y":2.72}
+
+let q = Point.from_json("{\"x\":1.0,\"y\":2.5}")
+IO.println(q.x)                                  # 1.0
+
+# Runtime reflection
+IO.println(Reflect.fields("Point"))               # [x, y]
+IO.println(Reflect.get(p, "x"))                   # 3.14
+```
+
+Use `@json(name: "key")` to rename JSON keys:
+```ruby
+class User(props: [serializable: json]):
+    @json(name: "user_name")
+    let username: String
+    let age: Int
+```
+
 ### Type System
 
 Built-in types: `Int`, `Float` (32-bit), `Double` (64-bit), `Bool`, `String`, `Nil`, `Array<T>`, `Hash<K, V>`, `Range`, `Block`, `Thread`, `Channel<T>`, `Future`, `IntPtr`
@@ -340,6 +369,8 @@ FFI-only types: `Uint8` (i8), `Uint32` (i32)
 | 31 | `async_await` | Async functions, await, Future, error propagation | **Pass** |
 | 32 | `sockets` | TCP server/client, echo test, IntPtr buffers | **Pass** |
 | 33 | `http` | HTTP server, request parsing, routing, response | **Pass** |
+| 34 | `serialization` | JSON serialization, `@json` rename, `Reflect` class | **Pass** |
+| 35 | `async_closures` | Await inside block literals, async closures | **Pass** |
 
 Run the test suite:
 ```bash
