@@ -33,7 +33,7 @@ for i in 0..20:
 - **Resource management** — `using` blocks, `dispose()`, `finalize()` for deterministic cleanup
 - **FFI** — call native C libraries directly via `NativeLibrary` + `@native` annotations
 - **Namespaces** — organize code with `namespace` declarations
-- **Rich stdlib** — String, Array, Hash, Int, Double, Float, Math, Set, List, Dict, Tuple
+- **Rich stdlib** — String, Array, Hash, Int, Double, Float, Math, Set, List, Dict, Tuple, DateTime, TcpSocket, HttpServer
 - **Iterator protocol** — any class with `has_next()`/`next()` works in `for..in` loops
 
 ## Prerequisites
@@ -318,9 +318,9 @@ FFI-only types: `Uint8` (i8), `Uint32` (i32)
 | 16 | `namespaces` | Namespace declarations, qualified access | **Pass** |
 | 17 | `ffi` | NativeLibrary, @native, C interop | **Pass** |
 | 18 | `intptr` | IntPtr raw pointer operations | **Pass** |
-| 19 | `structs` | @struct C-compatible memory layouts | **Pass** |
-| 20 | `datetime` | DateTime via C FFI + @struct + Marshal | **Pass** |
-| 21 | `packed_unions` | @packed structs, @union types | **Pass** |
+| 19 | `structs` | Struct layout (props: [layout: struct]) | **Pass** |
+| 20 | `datetime` | DateTime via C FFI + struct layout + Marshal | **Pass** |
+| 21 | `packed_unions` | Packed/union layouts (props: [layout: packed/union]) | **Pass** |
 | 22 | `finalize` | finalize, dispose, using blocks | **Pass** |
 | 23 | `gc_pressure` | GC stress: string interp, objects, nested refs | **Pass** |
 | 24 | `generics` | Generic classes (Box\<T\>), List, Set, Tuple | **Pass** |
@@ -331,6 +331,8 @@ FFI-only types: `Uint8` (i8), `Uint32` (i32)
 | 29 | `stdlib_pure_methods` | Pure Ember stdlib methods, inline @\_\_builtin expression | **Pass** |
 | 30 | `generators` | Generators (yield keyword, state machine desugaring) | **Pass** |
 | 31 | `async_await` | Async functions, await, Future, error propagation | **Pass** |
+| 32 | `sockets` | TCP server/client, echo test, IntPtr buffers | **Pass** |
+| 33 | `http` | HTTP server, request parsing, routing, response | **Pass** |
 
 Run the test suite:
 ```bash
