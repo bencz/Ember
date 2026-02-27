@@ -1,8 +1,8 @@
-# Ember
+# Ember Programming Language
 
 **An educational, 100% object-oriented programming language with native compilation.**
 
-Ember combines Python/Ruby-inspired syntax with static typing, type inference, and LLVM-powered native code generation. It compiles through the **Anvil ( ecodes )** - 100% BASED on [ELENA-codes](https://github.com/ELENA-LANG/elena-lang) - intermediate representation a high-level, object-aware IR that bridges the semantic gap between OO languages and low-level machine code.
+Ember combines Python/Ruby-inspired syntax with static typing, type inference, and LLVM-powered native code generation. It compiles through the **Anvil** ( based on [ELENA](https://github.com/ELENA-LANG/elena-lang) VM e-code ) intermediate representation — a high-level, object-aware IR that bridges the semantic gap between OO languages and low-level machine code.
 
 ```ruby
 # Hello World
@@ -26,11 +26,15 @@ for i in 0..20:
 - **100% object-oriented** — everything is an object, including primitives
 - **Static typing with inference** — explicit annotations optional where types can be inferred
 - **Native compilation** — compiles to machine code via LLVM (not interpreted)
-- **Anvil IR** — custom high-level intermediate representation with 76 opcodes
+- **Anvil IR** — custom high-level intermediate representation with 79 opcodes
+- **Async/Await** — write asynchronous code with `async def` and `await`, backed by a thread pool executor
+- **Generics** — user-definable generic classes (`class Box<T>:`) with type-erased specialization
 - **GC-managed memory** — custom generational GC (young/mature/permanent regions)
 - **Resource management** — `using` blocks, `dispose()`, `finalize()` for deterministic cleanup
 - **FFI** — call native C libraries directly via `NativeLibrary` + `@native` annotations
 - **Namespaces** — organize code with `namespace` declarations
+- **Rich stdlib** — String, Array, Hash, Int, Double, Float, Math, Set, List, Dict, Tuple
+- **Iterator protocol** — any class with `has_next()`/`next()` works in `for..in` loops
 
 ## Prerequisites
 
@@ -138,12 +142,42 @@ IO.println("Hello, ${name}!")
 IO.println("2 + 3 = ${2 + 3}")
 ```
 
+### Generics
+
+```ruby
+class Box<T>:
+    def initialize(@value):
+        let x = 0
+    def get():
+        return @value
+
+let int_box = Box.new(42)
+let str_box = Box.new("hello")
+IO.println(int_box.get())     # 42
+IO.println(str_box.get())     # hello
+```
+
 ### Collections
 
 ```ruby
 let numbers = [1, 2, 3, 4, 5]
 IO.println(numbers[0])
 IO.println(numbers.length())
+IO.println(numbers.sort())       # [1, 2, 3, 4, 5]
+IO.println(numbers.reverse())    # [5, 4, 3, 2, 1]
+IO.println(numbers.sum())        # 15
+
+# Typed collections
+let lst = List.new()
+lst.push(10)
+lst.push(20)
+
+let s = Set.new()
+s.add("apple")
+s.add("banana")
+
+let pair = Tuple.new("key", 42)
+IO.println(pair.first())   # key
 ```
 
 ### Classes and Inheritance
@@ -199,6 +233,28 @@ let value = ch.receive()
 IO.println("Got: ${value}")
 ```
 
+### Async/Await
+
+```ruby
+async def compute(x):
+    return x * 2
+
+let f = compute(21)
+IO.println("Result: ${f.value()}")    # Result: 42
+
+# Await inside async functions
+async def pipeline(x):
+    let doubled = await compute(x)
+    return doubled + 10
+
+IO.println(pipeline(5).value())       # 20
+
+# Concurrent futures
+let f1 = compute(10)
+let f2 = compute(20)
+IO.println(Future.all([f1, f2]))      # [20, 40]
+```
+
 ### Resource Management
 
 ```ruby
@@ -234,7 +290,9 @@ class LibM(NativeLibrary):
 
 ### Type System
 
-Built-in types: `Int`, `Float` (32-bit), `Double` (64-bit), `Bool`, `String`, `Nil`, `Array<T>`, `Hash<K, V>`, `Range`, `Block`, `Thread`, `Channel<T>`, `IntPtr`
+Built-in types: `Int`, `Float` (32-bit), `Double` (64-bit), `Bool`, `String`, `Nil`, `Array<T>`, `Hash<K, V>`, `Range`, `Block`, `Thread`, `Channel<T>`, `Future`, `IntPtr`
+
+Stdlib generic types: `List<T>`, `Dict<K,V>`, `Set<T>`, `Tuple<A,B>`
 
 FFI-only types: `Uint8` (i8), `Uint32` (i32)
 
@@ -265,6 +323,14 @@ FFI-only types: `Uint8` (i8), `Uint32` (i32)
 | 21 | `packed_unions` | @packed structs, @union types | **Pass** |
 | 22 | `finalize` | finalize, dispose, using blocks | **Pass** |
 | 23 | `gc_pressure` | GC stress: string interp, objects, nested refs | **Pass** |
+| 24 | `generics` | Generic classes (Box\<T\>), List, Set, Tuple | **Pass** |
+| 25 | `stdlib_string` | String stdlib extensions (trim, replace, split...) | **Pass** |
+| 26 | `stdlib_collections` | Array/Hash extended methods (sort, reduce, merge...) | **Pass** |
+| 27 | `stdlib_math` | Math module, Int/Double numeric extensions | **Pass** |
+| 28 | `stdlib_iterator` | Iterator protocol: custom classes in for..in | **Pass** |
+| 29 | `stdlib_pure_methods` | Pure Ember stdlib methods, inline @\_\_builtin expression | **Pass** |
+| 30 | `generators` | Generators (yield keyword, state machine desugaring) | **Pass** |
+| 31 | `async_await` | Async functions, await, Future, error propagation | **Pass** |
 
 Run the test suite:
 ```bash
@@ -278,3 +344,4 @@ Run the test suite:
 - [Architecture Guide](ARCHITECTURE.md) — Compiler internals and pipeline
 - [Anvil IR Specification](anvil_spec.md) — VM and IR design
 - [Ecode Reference](anvil_ecode_ref.md) — Complete opcode listing
+
