@@ -26,7 +26,7 @@ for i in 0..20:
 - **100% object-oriented** — everything is an object, including primitives
 - **Static typing with inference** — explicit annotations optional where types can be inferred
 - **Native compilation** — compiles to machine code via LLVM (not interpreted)
-- **Anvil IR** — custom high-level intermediate representation with 79 opcodes
+- **Anvil IR** — custom high-level intermediate representation with 80 opcodes
 - **Async/Await** — write asynchronous code with `async def` and `await`, backed by a thread pool executor
 - **Generics** — user-definable generic classes (`class Box<T>:`) with type-erased specialization
 - **GC-managed memory** — custom generational GC (young/mature/permanent regions)
@@ -74,6 +74,7 @@ Options:
   --emit-ast      Dump parsed AST and exit
   --emit-ecodes   Dump Anvil IR (ecodes) and exit
   --emit-llvm     Dump LLVM IR and exit
+  --target <plat> Target platform: mac, linux (default: auto-detect)
   --verbose       Verbose compilation output
   --help, -h      Show help
 
@@ -283,9 +284,15 @@ IO.println(Math.square(5))
 
 ```ruby
 class LibM(NativeLibrary):
-    load("libm.dylib")
+    load(mac: "libm.dylib", linux: "libm.so.6")
     @native def sqrt(x: Double) -> Double
     @native def pow(base: Double, exp: Double) -> Double
+```
+
+Cross-compile with `--target`:
+```bash
+emberc --target linux source.em -o output     # Cross-compile for Linux
+emberc source.em -o output                     # Auto-detect host platform
 ```
 
 ### Type System
