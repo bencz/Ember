@@ -1,1 +1,280 @@
 # Ember
+
+**An educational, 100% object-oriented programming language with native compilation.**
+
+Ember combines Python/Ruby-inspired syntax with static typing, type inference, and LLVM-powered native code generation. It compiles through the **Anvil ( ecodes )** - 100% BASED on [ELENA-codes](https://github.com/ELENA-LANG/elena-lang) - intermediate representation a high-level, object-aware IR that bridges the semantic gap between OO languages and low-level machine code.
+
+```ruby
+# Hello World
+IO.print("Hello, World!")
+```
+
+```ruby
+# Recursive Fibonacci
+def fib(n: Int) -> Int:
+    if n <= 1:
+        return n
+    return fib(n - 1) + fib(n - 2)
+
+for i in 0..20:
+    IO.println("fib(${i}) = ${fib(i)}")
+```
+
+## Language Highlights
+
+- **Python/Ruby hybrid syntax** — indentation-based, clean and readable
+- **100% object-oriented** — everything is an object, including primitives
+- **Static typing with inference** — explicit annotations optional where types can be inferred
+- **Native compilation** — compiles to machine code via LLVM (not interpreted)
+- **Anvil IR** — custom high-level intermediate representation with 76 opcodes
+- **GC-managed memory** — custom generational GC (young/mature/permanent regions)
+- **Resource management** — `using` blocks, `dispose()`, `finalize()` for deterministic cleanup
+- **FFI** — call native C libraries directly via `NativeLibrary` + `@native` annotations
+- **Namespaces** — organize code with `namespace` declarations
+
+## Prerequisites
+
+| Dependency | Version | Notes |
+|-----------|---------|-------|
+| CMake | 3.20+ | Build system |
+| LLVM | 21 | Backend code generation |
+| C++ compiler | C++17 | Clang or GCC |
+| C compiler | C11 | For the runtime |
+
+On macOS with Homebrew:
+```bash
+brew install cmake llvm pkg-config
+```
+
+## Build
+
+```bash
+mkdir -p build && cd build
+cmake .. -DLLVM_DIR=/opt/homebrew/opt/llvm/lib/cmake/llvm
+make -j8
+```
+
+The compiler binary is produced at `build/emberc`.
+
+## Usage
+
+```
+emberc [options] <source.em>
+
+Options:
+  -o <file>       Output executable name (default: a.out)
+  -O0             No optimization (debug)
+  -O1             Basic optimization
+  -O2             Full optimization (default)
+  --emit-tokens   Dump lexer tokens and exit
+  --emit-ast      Dump parsed AST and exit
+  --emit-ecodes   Dump Anvil IR (ecodes) and exit
+  --emit-llvm     Dump LLVM IR and exit
+  --verbose       Verbose compilation output
+  --help, -h      Show help
+
+Linker flags:
+  -l<lib>         Link with library (e.g. -lSDL3)
+  -L<dir>         Add library search path
+  --rpath <dir>   Add runtime library search path
+```
+
+Linker flags are merged with any flags auto-derived from `NativeLibrary.load()` calls.
+
+Example:
+```bash
+./build/emberc test_samples/01_hello_world.em -o hello
+./hello
+# Hello, World!
+```
+
+## Language Features
+
+### Variables and Types
+
+```ruby
+let x: Int = 42        # Explicit type
+let y = 3.14           # Inferred as Double (64-bit)
+let z = 1.5f           # Inferred as Float (32-bit)
+let name = "Ember"     # Inferred as String
+let flag = true        # Inferred as Bool
+```
+
+### Functions
+
+```ruby
+def greet(name: String) -> String:
+    return "Hello, ${name}!"
+
+IO.println(greet("World"))
+```
+
+### Control Flow
+
+```ruby
+if x > 10:
+    IO.println("big")
+elif x > 5:
+    IO.println("medium")
+else:
+    IO.println("small")
+
+while i < 10:
+    IO.println(i)
+    i = i + 1
+
+for item in [1, 2, 3]:
+    IO.println(item)
+
+for i in 0..10:
+    IO.println(i)
+```
+
+### String Interpolation
+
+```ruby
+let name = "World"
+IO.println("Hello, ${name}!")
+IO.println("2 + 3 = ${2 + 3}")
+```
+
+### Collections
+
+```ruby
+let numbers = [1, 2, 3, 4, 5]
+IO.println(numbers[0])
+IO.println(numbers.length())
+```
+
+### Classes and Inheritance
+
+```ruby
+class Animal:
+    def initialize(name: String):
+        let @name = name
+
+    def speak() -> String:
+        return "..."
+
+class Dog(Animal):
+    def speak() -> String:
+        return "Woof!"
+
+let rex = Dog.new("Rex")
+IO.println(rex.speak())
+```
+
+### Closures
+
+```ruby
+let square = |x| x * x
+IO.println(square.call(5))
+
+items.each(do |item|:
+    IO.println(item)
+)
+```
+
+### Exception Handling
+
+```ruby
+try:
+    let result = divide(10, 0)
+catch e: DivisionByZeroError:
+    IO.println("Cannot divide by zero!")
+finally:
+    IO.println("Done")
+```
+
+### Concurrency
+
+```ruby
+let ch = Channel.new(0)
+
+Thread.new(do:
+    ch.send(42)
+)
+
+let value = ch.receive()
+IO.println("Got: ${value}")
+```
+
+### Resource Management
+
+```ruby
+class Connection(Object):
+    def initialize(url: String):
+        let @url = url
+    def dispose():
+        IO.println("connection closed")
+
+using conn = Connection.new("db://localhost"):
+    IO.println("using connection")
+# dispose() called automatically
+```
+
+### Namespaces
+
+```ruby
+namespace Math:
+    def square(x: Int) -> Int:
+        return x * x
+
+IO.println(Math.square(5))
+```
+
+### FFI (Foreign Function Interface)
+
+```ruby
+class LibM(NativeLibrary):
+    load("libm.dylib")
+    @native def sqrt(x: Double) -> Double
+    @native def pow(base: Double, exp: Double) -> Double
+```
+
+### Type System
+
+Built-in types: `Int`, `Float` (32-bit), `Double` (64-bit), `Bool`, `String`, `Nil`, `Array<T>`, `Hash<K, V>`, `Range`, `Block`, `Thread`, `Channel<T>`, `IntPtr`
+
+FFI-only types: `Uint8` (i8), `Uint32` (i32)
+
+## Current Status
+
+| # | Test | Feature | Status |
+|---|------|---------|--------|
+| 01 | `hello_world` | Print, basic pipeline | **Pass** |
+| 02 | `variables_and_types` | Variables, types, arithmetic | **Pass** |
+| 03 | `classes_basic` | Class declaration, methods | **Pass** |
+| 04 | `inheritance` | Class hierarchy, polymorphism | **Pass** |
+| 05 | `control_flow` | if/elif/else, while, for-in | **Pass** |
+| 06 | `closures_blocks` | Lambdas, blocks, capture | **Pass** |
+| 07 | `collections` | Arrays, hashes | **Pass** |
+| 08 | `exceptions` | try/catch/finally, throw | **Pass** |
+| 09 | `operators` | Operator overloading | **Pass** |
+| 10 | `type_inference` | Implicit type inference | **Pass** |
+| 11 | `string_interpolation` | `"${expr}"` templates | **Pass** |
+| 12 | `iterators` | Range/array iteration | **Pass** |
+| 13 | `concurrency` | Threads, channels | **Pass** |
+| 14 | `pattern_matching` | match/when statements | **Pass** |
+| 15 | `fibonacci` | Recursion, loops | **Pass** |
+| 16 | `namespaces` | Namespace declarations, qualified access | **Pass** |
+| 17 | `ffi` | NativeLibrary, @native, C interop | **Pass** |
+| 18 | `intptr` | IntPtr raw pointer operations | **Pass** |
+| 19 | `structs` | @struct C-compatible memory layouts | **Pass** |
+| 20 | `datetime` | DateTime via C FFI + @struct + Marshal | **Pass** |
+| 21 | `packed_unions` | @packed structs, @union types | **Pass** |
+| 22 | `finalize` | finalize, dispose, using blocks | **Pass** |
+| 23 | `gc_pressure` | GC stress: string interp, objects, nested refs | **Pass** |
+
+Run the test suite:
+```bash
+./test_samples/run_all.sh
+```
+
+## Documentation
+
+- [Language Tutorial](docs/ember_tutorial.md) — Full language guide with examples
+- [Grammar Specification](docs/ember_grammar.md) — EBNF grammar
+- [Architecture Guide](ARCHITECTURE.md) — Compiler internals and pipeline
+- [Anvil IR Specification](anvil_spec.md) — VM and IR design
+- [Ecode Reference](anvil_ecode_ref.md) — Complete opcode listing
